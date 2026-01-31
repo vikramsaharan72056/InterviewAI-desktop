@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Interview AI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: transparent;
+      color: white;
+      overflow: hidden;
+      -webkit-app-region: drag;
+    }
+
+    .container {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .header {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      -webkit-app-region: drag;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header h1 {
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0.9;
+    }
+
+    .status {
+      font-size: 11px;
+      opacity: 0.7;
+      padding: 3px 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    .status.listening {
+      background: rgba(16, 185, 129, 0.3);
+      color: #4ade80;
+    }
+
+    .controls {
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.2);
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      -webkit-app-region: no-drag;
+    }
+
+    select {
+      flex: 1;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-size: 11px;
+      -webkit-app-region: no-drag;
+    }
+
+    select option {
+      background: #1f2937;
+      color: white;
+    }
+
+    button {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      -webkit-app-region: no-drag;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-icon {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      padding: 6px 10px;
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      -webkit-app-region: no-drag;
+    }
+
+    .content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .content::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
+    }
+
+    .content::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+    }
+
+    .content::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .question-box {
+      background: rgba(59, 130, 246, 0.15);
+      border-left: 3px solid #3b82f6;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+
+    .question-box h3 {
+      font-size: 10px;
+      opacity: 0.7;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .question-text {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .answer-box {
+      background: rgba(16, 185, 129, 0.15);
+      border-left: 3px solid #10b981;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+
+    .answer-box h3 {
+      font-size: 10px;
+      color: #4ade80;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .answer-text {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #e5e7eb;
+    }
+
+    .empty-state {
+      text-align: center;
+      opacity: 0.4;
+      padding: 40px 20px;
+      font-size: 12px;
+    }
+
+    .footer {
+      padding: 6px 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      opacity: 0.7;
+      -webkit-app-region: no-drag;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 36px;
+      height: 18px;
+      -webkit-app-region: no-drag;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.2);
+      transition: 0.3s;
+      border-radius: 18px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 12px;
+      width: 12px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    input:checked+.slider {
+      background-color: #10b981;
+    }
+
+    input:checked+.slider:before {
+      transform: translateX(18px);
+    }
+
+    .setting-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      -webkit-app-region: no-drag;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: rgba(17, 24, 39, 0.98);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .file-upload-section {
+      margin-bottom: 20px;
+    }
+
+    .file-upload-section label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 8px;
+      opacity: 0.9;
+    }
+
+    .file-upload-box {
+      border: 2px dashed rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .file-upload-box:hover {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .file-upload-box.has-file {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.15);
+    }
+
+    .file-upload-box input[type="file"] {
+      display: none;
+    }
+
+    .file-name {
+      font-size: 11px;
+      color: #4ade80;
+      margin-top: 5px;
+    }
+
+    .upload-status {
+      font-size: 11px;
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .upload-status.success {
+      background: rgba(16, 185, 129, 0.2);
+      color: #4ade80;
+      display: block;
+    }
+
+    .upload-status.error {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      display: block;
+    }
+
+    .btn-upload {
+      width: 100%;
+      padding: 10px;
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    .btn-upload:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-setup {
+      background: #3b82f6;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-left">
+        <h1>🎯 Interview AI</h1>
+        <div class="status" id="status">Ready</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <select id="audioSource" title="Select audio source">
+        <option value="">Loading...</option>
+      </select>
+      <button class="btn-setup" id="setupBtn" title="Upload Resume & JD">📄</button>
+      <button class="btn-primary" id="startBtn" title="Start listening">▶</button>
+      <button class="btn-danger" id="stopBtn" style="display: none;" title="Stop">⏹</button>
+      <button class="btn-icon" id="clearBtn" title="Clear">🗑</button>
+      <button class="btn-icon" id="refreshAudioBtn" title="Refresh audio sources">🔄</button>
+    </div>
+
+    <div class="content" id="content">
+      <div class="empty-state">
+        Click 📄 to upload resume & JD, then select audio and click ▶
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="setting-item">
+        <span>On Top</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="alwaysOnTop" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="setting-item">
+        <span>Auto-scroll</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="autoScroll" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Setup Modal -->
+  <div class="modal" id="setupModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📄 Upload Documents</h2>
+        <button class="modal-close" id="closeModal">×</button>
+      </div>
+
+      <div class="file-upload-section">
+        <label>Resume (PDF)</label>
+        <div class="file-upload-box" id="resumeBox">
+          <input type="file" id="resumeInput" accept="application/pdf">
+          <div>📄 Click to select resume</div>
+          <div class="file-name" id="resumeName"></div>
+        </div>
+      </div>
+
+      <div class="file-upload-section">
+        <label>Job Description (PDF)</label>
+        <div class="file-upload-box" id="jdBox">
+          <input type="file" id="jdInput" accept="application/pdf">
+          <div>📄 Click to select job description</div>
+          <div class="file-name" id="jdName"></div>
+        </div>
+      </div>
+
+      <button class="btn-upload" id="uploadBtn" disabled>Upload Documents</button>
+
+      <div class="upload-status" id="uploadStatus"></div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    const axios = require('axios');
+
+    const API_URL = 'http://localhost:5000';
+    const USER_ID = 'user1';
+
+    let isListening = false;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let audioStream = null;
+
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const refreshAudioBtn = document.getElementById('refreshAudioBtn');
+    const content = document.getElementById('content');
+    const status = document.getElementById('status');
+    const alwaysOnTopCheckbox = document.getElementById('alwaysOnTop');
+    const autoScrollCheckbox = document.getElementById('autoScroll');
+    const audioSourceSelect = document.getElementById('audioSource');
+
+    // Load audio sources
+    async function loadAudioSources() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter(device => device.kind === 'audioinput');
+
+        audioSourceSelect.innerHTML = '';
+
+        if (audioInputs.length === 0) {
+          audioSourceSelect.innerHTML = '<option value="">No sources</option>';
+          return;
+        }
+
+        audioInputs.forEach((device, index) => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          option.textContent = device.label || `Source ${index + 1}`;
+          audioSourceSelect.appendChild(option);
+        });
+
+        // Auto-select stereo mix if found
+        const stereoMix = audioInputs.find(d =>
+          d.label.toLowerCase().includes('stereo mix') ||
+          d.label.toLowerCase().includes('what u hear') ||
+          d.label.toLowerCase().includes('wave out') ||
+          d.label.toLowerCase().includes('loopback')
+        );
+
+        if (stereoMix) {
+          audioSourceSelect.value = stereoMix.deviceId;
+        }
+
+      } catch (err) {
+        console.error('Error loading audio sources:', err);
+        audioSourceSelect.innerHTML = '<option value="">Error</option>';
+      }
+    }
+
+    refreshAudioBtn.addEventListener('click', loadAudioSources);
+    loadAudioSources();
+
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(() => loadAudioSources())
+      .catch(err => console.error('Mic permission needed:', err));
+
+    // Modal functionality
+    const setupBtn = document.getElementById('setupBtn');
+    const setupModal = document.getElementById('setupModal');
+    const closeModal = document.getElementById('closeModal');
+    const resumeBox = document.getElementById('resumeBox');
+    const jdBox = document.getElementById('jdBox');
+    const resumeInput = document.getElementById('resumeInput');
+    const jdInput = document.getElementById('jdInput');
+    const resumeName = document.getElementById('resumeName');
+    const jdName = document.getElementById('jdName');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadStatus = document.getElementById('uploadStatus');
+
+    let selectedResume = null;
+    let selectedJD = null;
+
+    // Open modal
+    setupBtn.addEventListener('click', () => {
+      setupModal.classList.add('active');
+    });
+
+    // Close modal
+    closeModal.addEventListener('click', () => {
+      setupModal.classList.remove('active');
+    });
+
+    // Click outside to close
+    setupModal.addEventListener('click', (e) => {
+      if (e.target === setupModal) {
+        setupModal.classList.remove('active');
+      }
+    });
+
+    // Resume file selection
+    resumeBox.addEventListener('click', () => {
+      resumeInput.click();
+    });
+
+    resumeInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        selectedResume = file;
+        resumeName.textContent = `✓ ${file.name}`;
+        resumeBox.classList.add('has-file');
+        checkUploadReady();
+      }
+    });
+
+    // JD file selection
+    jdBox.addEventListener('click', () => {
+      jdInput.click();
+    });
+
+    jdInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        selectedJD = file;
+        jdName.textContent = `✓ ${file.name}`;
+        jdBox.classList.add('has-file');
+        checkUploadReady();
+      }
+    });
+
+    // Check if both files selected
+    function checkUploadReady() {
+      if (selectedResume && selectedJD) {
+        uploadBtn.disabled = false;
+      }
+    }
+
+    // Upload documents
+    uploadBtn.addEventListener('click', async () => {
+      if (!selectedResume || !selectedJD) return;
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Uploading...';
+      uploadStatus.className = 'upload-status';
+      uploadStatus.textContent = '';
+
+      try {
+        const formData = new FormData();
+        formData.append('resume', selectedResume);
+        formData.append('jobDescription', selectedJD);
+        formData.append('userId', USER_ID);
+
+        const response = await axios.post(
+          `${API_URL}/interview/upload-context`,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          }
+        );
+
+        uploadStatus.className = 'upload-status success';
+        uploadStatus.textContent = '✓ Documents uploaded successfully!';
+        uploadBtn.textContent = 'Upload Complete';
+
+        // Update status
+        status.textContent = 'Ready (Docs uploaded)';
+
+        // Close modal after 2 seconds
+        setTimeout(() => {
+          setupModal.classList.remove('active');
+          uploadBtn.textContent = 'Upload Documents';
+          uploadBtn.disabled = false;
+        }, 2000);
+
+      } catch (err) {
+        console.error('Upload error:', err);
+        uploadStatus.className = 'upload-status error';
+        uploadStatus.textContent = '✗ Upload failed: ' + (err.response?.data?.message || err.message);
+        uploadBtn.textContent = 'Upload Documents';
+        uploadBtn.disabled = false;
+      }
+    });
+
+    // Start listening
+    startBtn.addEventListener('click', async () => {
+      const selectedDevice = audioSourceSelect.value;
+
+      if (!selectedDevice) {
+        alert('Select audio source first');
+        return;
+      }
+
+      try {
+        const constraints = {
+          audio: {
+            deviceId: selectedDevice ? { exact: selectedDevice } : undefined,
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
+        };
+
+        audioStream = await navigator.mediaDevices.getUserMedia(constraints);
+        isListening = true;
+        startBtn.style.display = 'none';
+        stopBtn.style.display = 'block';
+        status.textContent = 'Listening';
+        status.classList.add('listening');
+
+        startRecordingLoop(audioStream);
+      } catch (err) {
+        alert('Audio access error: ' + err.message);
+        console.error(err);
+      }
+    });
+
+    // Stop listening
+    stopBtn.addEventListener('click', () => {
+      isListening = false;
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+      if (audioStream) {
+        audioStream.getTracks().forEach(track => track.stop());
+        audioStream = null;
+      }
+      startBtn.style.display = 'block';
+      stopBtn.style.display = 'none';
+      status.textContent = 'Stopped';
+      status.classList.remove('listening');
+    });
+
+    // Clear content
+    clearBtn.addEventListener('click', () => {
+      content.innerHTML = '<div class="empty-state">Cleared</div>';
+    });
+
+    // Always on top toggle
+    alwaysOnTopCheckbox.addEventListener('change', (e) => {
+      ipcRenderer.send('toggle-always-on-top', e.target.checked);
+    });
+
+    // Recording loop
+    function startRecordingLoop(stream) {
+      const recordChunk = () => {
+        if (!isListening) return;
+
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = (e) => {
+          audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+          if (!isListening) return;
+
+          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+          await processAudio(audioBlob);
+
+          setTimeout(recordChunk, 100);
+        };
+
+        mediaRecorder.start();
+        setTimeout(() => {
+          if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+          }
+        }, 3000);
+      };
+
+      recordChunk();
+    }
+
+    // Process audio
+    async function processAudio(audioBlob) {
+      try {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'audio.wav');
+
+        const transcribeRes = await axios.post(
+          `${API_URL}/interview/transcribe-audio`,
+          formData
+        );
+
+        const question = transcribeRes.data.text;
+        if (!question || question.trim().length < 5) return;
+
+        addQuestion(question);
+
+        const answerRes = await axios.post(
+          `${API_URL}/interview/get-answer`,
+          { userId: USER_ID, question }
+        );
+
+        const answer = answerRes.data.answer;
+        addAnswer(answer);
+
+      } catch (err) {
+        console.error('Error:', err);
+      }
+    }
+
+    // Add question
+    function addQuestion(text) {
+      const questionDiv = document.createElement('div');
+      questionDiv.className = 'question-box';
+      questionDiv.innerHTML = `
+        <h3>Question</h3>
+        <div class="question-text">${escapeHtml(text)}</div>
+      `;
+      content.appendChild(questionDiv);
+      scrollToBottom();
+    }
+
+    // Add answer
+    function addAnswer(text) {
+      const answerDiv = document.createElement('div');
+      answerDiv.className = 'answer-box';
+      answerDiv.innerHTML = `
+        <h3>Answer</h3>
+        <div class="answer-text">${escapeHtml(text)}</div>
+      `;
+      content.appendChild(answerDiv);
+      scrollToBottom();
+    }
+
+    // Scroll to bottom
+    function scrollToBottom() {
+      if (autoScrollCheckbox.checked) {
+        content.scrollTop = content.scrollHeight;
+      }
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+
+</html>
